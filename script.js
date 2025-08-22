@@ -59,7 +59,7 @@ class PiCameraController {
         this.piIp = piIp;
         
         try {
-            const response = await fetch(`http://${this.piIp}:5000/api/login`, {
+            const response = await fetch(`https://${this.piIp}:5000/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
