@@ -59,6 +59,7 @@ class PiCameraController {
         this.piIp = piIp;
         
         try {
+            // UPDATED: Use HTTPS instead of HTTP
             const response = await fetch(`https://${this.piIp}:5000/api/login`, {
                 method: 'POST',
                 headers: {
@@ -79,7 +80,7 @@ class PiCameraController {
                 this.showError(data.message || 'Login failed');
             }
         } catch (error) {
-            this.showError(`Cannot connect to Pi at ${this.piIp}:5000. Make sure the Pi is running and accessible.`);
+            this.showError(`Cannot connect to Pi at ${this.piIp}:5000. Make sure the Pi is running and accessible. You may need to accept the security certificate first by visiting https://${this.piIp}:5000 directly.`);
             console.error('Connection error:', error);
         }
     }
@@ -100,7 +101,7 @@ class PiCameraController {
         errorDiv.style.display = 'block';
         setTimeout(() => {
             errorDiv.style.display = 'none';
-        }, 5000);
+        }, 8000);
     }
 
     showDashboard() {
@@ -113,22 +114,34 @@ class PiCameraController {
         const videoFeed = document.getElementById('videoFeed');
         const videoLoading = document.getElementById('videoLoading');
         
-        videoFeed.src = `http://${this.piIp}:5000/api/video_feed?token=${this.authToken}`;
+        // UPDATED: Use HTTPS protocol
+        const protocol = 'https';
+        const videoUrl = `${protocol}://${this.piIp}:5000/api/video_feed?token=${this.authToken}&t=${Date.now()}`;
+        
+        console.log('Loading video from:', videoUrl);
+        
+        videoFeed.src = videoUrl;
         
         videoFeed.onload = () => {
+            console.log('Video feed loaded successfully');
             videoLoading.style.display = 'none';
             videoFeed.style.display = 'block';
             this.videoFeedRetryCount = 0;
         };
 
-        videoFeed.onerror = () => {
+        videoFeed.onerror = (error) => {
+            console.error('Video feed error:', error);
+            console.log('Failed URL:', videoUrl);
+            
             if (this.videoFeedRetryCount < this.maxRetries) {
                 this.videoFeedRetryCount++;
+                console.log(`Retrying video feed... attempt ${this.videoFeedRetryCount}`);
                 setTimeout(() => {
-                    videoFeed.src = `http://${this.piIp}:5000/api/video_feed?token=${this.authToken}&retry=${this.videoFeedRetryCount}`;
-                }, 2000);
+                    const retryUrl = `${protocol}://${this.piIp}:5000/api/video_feed?token=${this.authToken}&retry=${this.videoFeedRetryCount}&t=${Date.now()}`;
+                    videoFeed.src = retryUrl;
+                }, 2000 * this.videoFeedRetryCount);
             } else {
-                videoLoading.innerHTML = '<p class="text-danger">Failed to load video feed. Check camera connection.</p>';
+                videoLoading.innerHTML = '<p class="text-danger">Failed to load video feed after ' + this.maxRetries + ' attempts.<br>Check camera connection and try refreshing.<br><small>You may need to accept the security certificate by visiting <a href="https://' + this.piIp + ':5000" target="_blank">https://' + this.piIp + ':5000</a> first.</small></p>';
             }
         };
     }
@@ -144,7 +157,8 @@ class PiCameraController {
 
     async updateStatus() {
         try {
-            const response = await fetch(`http://${this.piIp}:5000/api/status`, {
+            // UPDATED: Use HTTPS instead of HTTP
+            const response = await fetch(`https://${this.piIp}:5000/api/status`, {
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
                 }
@@ -206,7 +220,7 @@ class PiCameraController {
         
         switch(status) {
             case 'connected':
-                statusElement.innerHTML = indicator + '<span class="status-good">Connected</span>';
+                statusElement.innerHTML = indicator + '<span class="status-good">Connected (HTTPS)</span>';
                 break;
             case 'disconnected':
                 statusElement.innerHTML = indicator + '<span class="status-danger">Disconnected</span>';
@@ -234,7 +248,8 @@ class PiCameraController {
 
     async startRecording() {
         try {
-            const response = await fetch(`http://${this.piIp}:5000/api/start_recording`, {
+            // UPDATED: Use HTTPS instead of HTTP
+            const response = await fetch(`https://${this.piIp}:5000/api/start_recording`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
@@ -244,6 +259,8 @@ class PiCameraController {
             const data = await response.json();
             if (data.success) {
                 this.updateStatus(); // Refresh status immediately
+            } else {
+                console.error('Start recording failed:', data.message);
             }
         } catch (error) {
             console.error('Start recording error:', error);
@@ -252,7 +269,8 @@ class PiCameraController {
 
     async stopRecording() {
         try {
-            const response = await fetch(`http://${this.piIp}:5000/api/stop_recording`, {
+            // UPDATED: Use HTTPS instead of HTTP
+            const response = await fetch(`https://${this.piIp}:5000/api/stop_recording`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
@@ -262,6 +280,8 @@ class PiCameraController {
             const data = await response.json();
             if (data.success) {
                 this.updateStatus(); // Refresh status immediately
+            } else {
+                console.error('Stop recording failed:', data.message);
             }
         } catch (error) {
             console.error('Stop recording error:', error);
@@ -270,7 +290,8 @@ class PiCameraController {
 
     async logout() {
         try {
-            await fetch(`http://${this.piIp}:5000/api/logout`, {
+            // UPDATED: Use HTTPS instead of HTTP
+            await fetch(`https://${this.piIp}:5000/api/logout`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${this.authToken}`
