@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Pi Camera Control</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1rem;
+        }
+
+        .video-feed {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        .status-good { color: #28a745; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+        .status-danger { color: #dc3545; font-weight: bold; }
+
+        .recording-list-item {
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+        }
+
+        .recording-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .connection-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .connection-indicator.connected { background-color: #28a745; }
+        .connection-indicator.disconnected { background-color: #dc3545; }
+        .connection-indicator.connecting { background-color: #ffc107; }
+
+        @media (max-width: 768px) {
+            .video-feed {
+                width: 100%;
+            }
+            
+            .card-body {
+                padding: 1rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand">🏠 Remote Pi Camera</span>
+            <button id="logoutBtn" class="btn btn-outline-light btn-sm" style="display: none;">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Login Section -->
+        <div id="loginSection" class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h4>🔐 Connect to Pi Camera</h4>
+                        <small class="text-muted">Enter your Raspberry Pi details</small>
+                    </div>
+                    <div class="card-body">
+                        <form id="setupForm">
+                            <div class="mb-3">
+                                <label for="piIpAddress" class="form-label">Pi IP Address</label>
+                                <input type="text" class="form-control" id="piIpAddress" placeholder="192.168.1.100" required>
+                                <small class="form-text text-muted">Find this by running <code>hostname -I</code> on your Pi</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" value="admin" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" placeholder="Enter password from camera_api.py" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Connect to Pi Camera</button>
+                        </form>
+                        <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
+                        
+                        <div class="mt-4">
+                            <h6>Troubleshooting:</h6>
+                            <ul class="small text-muted">
+                                <li>Make sure your Pi is running: <code>python3 camera_api.py</code></li>
+                                <li>Check Pi IP with: <code>hostname -I</code></li>
+                                <li>Both devices must be on same network</li>
+                                <li>Default password is in your camera_api.py file</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" style="display: none;">
+            <div class="row">
+                <!-- Live Feed -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5>📹 Live Feed</h5>
+                            <div>
+                                <button id="startRecordingBtn" class="btn btn-success btn-sm">▶️ Start Recording</button>
+                                <button id="stopRecordingBtn" class="btn btn-danger btn-sm" disabled>⏹️ Stop Recording</button>
+                            </div>
+                        </div>
+                        <div class="card-body text-center">
+                            <img id="videoFeed" class="video-feed" alt="Camera Feed" style="display: none;">
+                            <div id="videoLoading" class="text-muted">
+                                <div class="spinner-border" role="status"></div>
+                                <p>Connecting to camera...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Panel -->
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5>📊 System Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="systemStatus">
+                                <p><strong>Connection:</strong> <span id="connectionStatus" class="text-warning">Connecting...</span></p>
+                                <p><strong>Recording:</strong> <span id="recordingStatus">Inactive</span></p>
+                                <p><strong>Storage:</strong> <span id="storageStatus">Loading...</span></p>
+                                <p><strong>Memory:</strong> <span id="memoryStatus">Loading...</span></p>
+                                <p><strong>Camera:</strong> <span id="cameraStatus">Loading...</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>📁 Recent Recordings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="recordingsList">
+                                <p class="text-muted">Loading recordings...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
+    <script>
+        class PiCameraController {
+            constructor() {
+                this.piIp = null;
+                this.authToken = null;
+                this.statusInterval = null;
+                this.videoFeedRetryCount = 0;
+                this.maxRetries = 5;
+                
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                // Setup form
+                document.getElementById('setupForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.connectToPi();
+                });
+
+                // Control buttons
+                document.getElementById('startRecordingBtn').addEventListener('click', () => {
+                    this.startRecording();
+                });
+
+                document.getElementById('stopRecordingBtn').addEventListener('click', () => {
+                    this.stopRecording();
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    this.logout();
+                });
+
+                // Load saved settings
+                this.loadSavedSettings();
+            }
+
+            loadSavedSettings() {
+                const savedIp = localStorage.getItem('piCameraIp');
+                if (savedIp) {
+                    document.getElementById('piIpAddress').value = savedIp;
+                }
+            }
+
+            async connectToPi() {
+                const piIp = document.getElementById('piIpAddress').value.trim();
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+
+                if (!piIp || !username || !password) {
+                    this.showError('Please fill in all fields');
+                    return;
+                }
+
+                // Validate IP format
+                if (!this.isValidIP(piIp)) {
+                    this.showError('Please enter a valid IP address (e.g., 192.168.1.100)');
+                    return;
+                }
+
+                this.piIp = piIp;
+                
+                try {
+                    const response = await fetch(`http://${this.piIp}:5000/api/login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.authToken = data.token;
+                        localStorage.setItem('piCameraIp', this.piIp);
+                        this.showDashboard();
+                        this.startStatusUpdates();
+                        this.startVideoFeed();
+                    } else {
+                        this.showError(data.message || 'Login failed');
+                    }
+                } catch (error) {
+                    this.showError(`Cannot connect to Pi at ${this.piIp}:5000. Make sure your Pi camera server is running and both devices are on the same network.`);
+                    console.error('Connection error:', error);
+                }
+            }
+
+            isValidIP(ip) {
+                const pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+                if (!pattern.test(ip)) return false;
+                
+                return ip.split('.').every(part => {
+                    const num = parseInt(part);
+                    return num >= 0 && num <= 255;
+                });
+            }
+
+            showError(message) {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 8000);
+            }
+
+            showDashboard() {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'block';
+            }
+
+            startVideoFeed() {
+                const videoFeed = document.getElementById('videoFeed');
+                const videoLoading = document.getElementById('videoLoading');
+                
+                videoFeed.src = `http://${this.piIp}:5000/api/video_feed?token=${this.authToken}`;
+                
+                videoFeed.onload = () => {
+                    videoLoading.style.display = 'none';
+                    videoFeed.style.display = 'block';
+                    this.videoFeedRetryCount = 0;
+                };
+
+                videoFeed.onerror = () => {
+                    if (this.videoFeedRetryCount < this.maxRetries) {
+                        this.videoFeedRetryCount++;
+                        setTimeout(() => {
+                            videoFeed.src = `http://${this.piIp}:5000/api/video_feed?token=${this.authToken}&retry=${this.videoFeedRetryCount}`;
+                        }, 2000);
+                    } else {
+                        videoLoading.innerHTML = '<p class="text-danger">Failed to load video feed. Check camera connection.</p>';
+                    }
+                };
+            }
+
+            async startStatusUpdates() {
+                this.statusInterval = setInterval(() => {
+                    this.updateStatus();
+                }, 5000);
+                
+                // Initial status update
+                this.updateStatus();
+            }
+
+            async updateStatus() {
+                try {
+                    const response = await fetch(`http://${this.piIp}:5000/api/status`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.authToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.updateStatusDisplay(data);
+                    } else {
+                        this.updateConnectionStatus('disconnected');
+                    }
+                } catch (error) {
+                    this.updateConnectionStatus('disconnected');
+                    console.error('Status update error:', error);
+                }
+            }
+
+            updateStatusDisplay(data) {
+                // Connection status
+                this.updateConnectionStatus('connected');
+
+                // Recording status
+                const recordingStatus = document.getElementById('recordingStatus');
+                const startBtn = document.getElementById('startRecordingBtn');
+                const stopBtn = document.getElementById('stopRecordingBtn');
+
+                if (data.recording) {
+                    recordingStatus.innerHTML = '<span class="status-danger">Active</span>';
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                } else {
+                    recordingStatus.innerHTML = '<span class="status-good">Inactive</span>';
+                    startBtn.disabled = false;
+                    stopBtn.disabled = true;
+                }
+
+                // Storage status
+                document.getElementById('storageStatus').innerHTML = 
+                    `${data.storage.free_gb}GB free<br><small class="text-muted">of ${data.storage.total_gb}GB total</small>`;
+
+                // Memory status
+                const memoryClass = data.memory.used_percent > 80 ? 'status-danger' : 
+                                   data.memory.used_percent > 60 ? 'status-warning' : 'status-good';
+                document.getElementById('memoryStatus').innerHTML = 
+                    `<span class="${memoryClass}">${data.memory.used_percent}% used</span><br><small class="text-muted">${data.memory.available_mb}MB free</small>`;
+
+                // Camera status
+                const cameraClass = data.camera_connected ? 'status-good' : 'status-danger';
+                document.getElementById('cameraStatus').innerHTML = 
+                    `<span class="${cameraClass}">${data.camera_connected ? 'Connected' : 'Disconnected'}</span>`;
+
+                // Recordings list
+                this.updateRecordingsList(data.recordings);
+            }
+
+            updateConnectionStatus(status) {
+                const statusElement = document.getElementById('connectionStatus');
+                const indicator = '<span class="connection-indicator ' + status + '"></span>';
+                
+                switch(status) {
+                    case 'connected':
+                        statusElement.innerHTML = indicator + '<span class="status-good">Connected</span>';
+                        break;
+                    case 'disconnected':
+                        statusElement.innerHTML = indicator + '<span class="status-danger">Disconnected</span>';
+                        break;
+                    case 'connecting':
+                        statusElement.innerHTML = indicator + '<span class="status-warning">Connecting...</span>';
+                        break;
+                }
+            }
+
+            updateRecordingsList(recordings) {
+                const recordingsList = document.getElementById('recordingsList');
+                
+                if (recordings && recordings.length > 0) {
+                    recordingsList.innerHTML = recordings.map(recording => `
+                        <div class="recording-list-item">
+                            <div class="fw-bold small">${recording.name}</div>
+                            <small class="text-muted">${recording.created} • ${recording.size}</small>
+                        </div>
+                    `).join('');
+                } else {
+                    recordingsList.innerHTML = '<p class="text-muted">No recordings found</p>';
+                }
+            }
+
+            async startRecording() {
+                try {
+                    const response = await fetch(`http://${this.piIp}:5000/api/start_recording`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.authToken}`
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateStatus(); // Refresh status immediately
+                    }
+                } catch (error) {
+                    console.error('Start recording error:', error);
+                }
+            }
+
+            async stopRecording() {
+                try {
+                    const response = await fetch(`http://${this.piIp}:5000/api/stop_recording`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.authToken}`
+                        }
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateStatus(); // Refresh status immediately
+                    }
+                } catch (error) {
+                    console.error('Stop recording error:', error);
+                }
+            }
+
+            async logout() {
+                try {
+                    await fetch(`http://${this.piIp}:5000/api/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${this.authToken}`
+                        }
+                    });
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+
+                // Clear session data
+                this.authToken = null;
+                this.piIp = null;
+                
+                // Clear intervals
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+
+                // Show login section
+                document.getElementById('dashboardSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'none';
+
+                // Clear form
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PiCameraController();
+        });
+    </script>
+</body>
+</html>
