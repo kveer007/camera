@@ -1,0 +1,560 @@
+/* =================================
+   MODERN PI CAMERA SYSTEM STYLES
+   ================================= */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --dark-color: #212529;
+    --light-color: #f8f9fa;
+    
+    --border-radius: 0.5rem;
+    --transition: all 0.3s ease;
+    --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+/* =================================
+   GLOBAL STYLES
+   ================================= */
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container-fluid {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    min-height: calc(100vh - 56px);
+    padding: 20px;
+}
+
+/* =================================
+   CONNECTION STATUS
+   ================================= */
+
+.connection-status {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 1050;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: var(--transition);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-connected .status-dot {
+    background-color: var(--success-color);
+    box-shadow: 0 0 10px var(--success-color);
+}
+
+.status-connecting .status-dot {
+    background-color: var(--warning-color);
+    animation: pulse 2s infinite;
+}
+
+.status-disconnected .status-dot {
+    background-color: var(--danger-color);
+    animation: flash 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes flash {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.3; }
+}
+
+/* =================================
+   NAVIGATION
+   ================================= */
+
+.navbar {
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.navbar-brand i {
+    font-size: 1.5rem;
+    color: var(--info-color);
+}
+
+/* =================================
+   LOGIN FORM
+   ================================= */
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    animation: slideInUp 0.5s ease;
+}
+
+.login-card .card-header {
+    background: linear-gradient(135deg, var(--primary-color), #0b5ed7) !important;
+    border: none;
+    border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+}
+
+.form-control {
+    border-radius: var(--border-radius);
+    border: 2px solid #e9ecef;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.btn {
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: width 0.6s, height 0.6s, top 0.6s, left 0.6s;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+}
+
+.btn:hover:before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn * {
+    position: relative;
+    z-index: 1;
+}
+
+/* =================================
+   SYSTEM STATUS BAR
+   ================================= */
+
+.system-status {
+    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+    border: none;
+    border-radius: var(--border-radius);
+    animation: slideInDown 0.5s ease;
+}
+
+.system-status .badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.system-status small {
+    font-size: 0.7rem;
+    color: #adb5bd !important;
+}
+
+/* =================================
+   VIDEO INTERFACE
+   ================================= */
+
+.video-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    animation: slideInLeft 0.5s ease;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.video-feed {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: var(--transition);
+}
+
+.video-feed:hover {
+    transform: scale(1.02);
+}
+
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    color: white;
+    padding: 15px;
+    font-size: 0.9rem;
+}
+
+.overlay-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 10;
+}
+
+/* =================================
+   CONTROLS PANEL
+   ================================= */
+
+.col-lg-4 .card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+    animation: slideInRight 0.5s ease;
+}
+
+.col-lg-4 .card:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.col-lg-4 .card:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.card-header {
+    background: rgba(248, 249, 250, 0.5) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.card-header h6 {
+    color: var(--dark-color);
+    margin: 0;
+}
+
+/* =================================
+   RECORDING CONTROLS
+   ================================= */
+
+#recordingTimer .badge {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 25px;
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* =================================
+   RECORDINGS LIST
+   ================================= */
+
+.recordings-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.recordings-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.recordings-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.recordings-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.recording-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+}
+
+.recording-item:hover {
+    background: rgba(13, 110, 253, 0.05);
+    border-radius: var(--border-radius);
+}
+
+.recording-item:last-child {
+    border-bottom: none;
+}
+
+.recording-info {
+    font-size: 0.9rem;
+}
+
+.recording-size {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+}
+
+/* =================================
+   MODAL STYLES
+   ================================= */
+
+.modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(248, 249, 250, 0.5);
+}
+
+/* =================================
+   TOAST NOTIFICATIONS
+   ================================= */
+
+.toast {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+}
+
+.toast-header {
+    background: rgba(248, 249, 250, 0.5);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* =================================
+   ANIMATIONS
+   ================================= */
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* =================================
+   RESPONSIVE DESIGN
+   ================================= */
+
+@media (max-width: 768px) {
+    .connection-status {
+        top: 60px;
+        right: 10px;
+        font-size: 10px;
+        padding: 6px 12px;
+    }
+    
+    .container-fluid {
+        padding: 10px;
+    }
+    
+    .system-status .row .col-md-3 {
+        margin-bottom: 10px;
+    }
+    
+    .video-container {
+        min-height: 250px;
+    }
+    
+    .card-header h5,
+    .card-header h6 {
+        font-size: 0.9rem;
+    }
+    
+    .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .overlay-info {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+    
+    .system-status .row {
+        text-align: center;
+    }
+    
+    .recordings-list {
+        max-height: 200px;
+    }
+}
+
+/* =================================
+   ACCESSIBILITY
+   ================================= */
+
+.btn:focus,
+.form-control:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* =================================
+   HIGH CONTRAST MODE
+   ================================= */
+
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0056b3;
+        --success-color: #145a32;
+        --danger-color: #a71e34;
+        --warning-color: #b8860b;
+    }
+}
+
+/* =================================
+   REDUCED MOTION
+   ================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =================================
+   PRINT STYLES
+   ================================= */
+
+@media print {
+    .connection-status,
+    .navbar,
+    .btn,
+    .modal,
+    .toast-container {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        background: white !important;
+    }
+}
