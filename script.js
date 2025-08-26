@@ -883,7 +883,7 @@ function togglePassword() {
    SERVICE WORKER REGISTRATION
    ===================================== */
 
-// Register service worker for offline functionality (optional)
+/*// Register service worker for offline functionality (optional)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/camera/sw.js')
