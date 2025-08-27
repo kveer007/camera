@@ -8,7 +8,7 @@ class CameraSystem {
         this.config = {
             // Updated to use your CloudFlare tunnel
             baseUrls: [
-                'https://homecam.homesecurity182.duckdns.org',  // CloudFlare tunnel (primary)
+                'https://homesecurity182.duckdns.org',  // CloudFlare tunnel (primary)
                 'https://192.168.0.147:5000'                    // Local fallback
             ],
             statusUpdateInterval: 5000,     // 5 seconds
